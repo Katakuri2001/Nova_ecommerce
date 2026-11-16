@@ -4,13 +4,13 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   hover?: boolean;
-  padding?: boolean;
 }
 
-export default function Card({ children, className = '', hover = false, padding = true }: CardProps) {
+export default function Card({ children, className = '', hover = false }: CardProps) {
   return (
     <div
-      className={`bg-surface-900/50 border border-surface-800 rounded-xl ${padding ? 'p-5' : ''} ${hover ? 'hover:border-surface-700 hover:bg-surface-900/80 transition-all duration-200' : ''} ${className}`}
+      className={`rounded-2xl border border-white/[0.07] bg-white/[0.025] ${hover ? 'transition hover:bg-white/[0.04]' : ''} ${className}`}
+      style={{ boxShadow: 'inset 0 1px #ffffff08' }}
     >
       {children}
     </div>

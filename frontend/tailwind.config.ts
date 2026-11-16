@@ -8,16 +8,26 @@ export default {
           400: '#7f9dfe', 500: '#5a7bfe', 600: '#4258f9', 700: '#3541e0',
           800: '#2d36b8', 900: '#2a318a', 950: '#1a1f4a',
         },
-        surface: {
-          50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 700: '#3f3f46',
-          800: '#27272a', 900: '#18181b', 950: '#09090b',
+        // Figma design accent blue
+        blue: {
+          50: '#eef4ff', 100: '#dce8ff', 200: '#b8d0ff', 300: '#91acff',
+          400: '#729fff', 500: '#4d8cff', 600: '#3a75e8', 700: '#2d5ec4',
+          800: '#234a9e', 900: '#1c3b7e', 950: '#112550',
         },
+        surface: {
+          50: '#f5f7ff', 100: '#e8ecf5', 200: '#c8d0e0', 300: '#a5b3c8',
+          400: '#718096', 500: '#596579', 600: '#4f5b70', 700: '#3a4556',
+          800: '#2a3344', 900: '#111724', 950: '#080b14',
+        },
+        ink: '#f5f7ff',
+        muted: '#a5b3c8',
+        dim: '#718096',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        display: ['Space Grotesk', 'sans-serif'],
+        sans: ['Manrope', 'system-ui', 'sans-serif'],
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
       },
-      borderRadius: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px' },
+      borderRadius: { xs: '4px', sm: '8px', md: '12px', lg: '16px', xl: '24px', '2xl': '28px', '3xl': '32px' },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',
         'slide-up': 'slideUp 0.4s ease-out',

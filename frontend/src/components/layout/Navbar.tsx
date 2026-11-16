@@ -1,6 +1,6 @@
-import React from 'react';
-import { ShoppingCart, User, Search, Menu, X, Heart, Grid3X3 } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { ShoppingCart, User, Search, Menu, X, Heart, Bell, ChevronDown } from 'lucide-react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../stores';
 import { useCartStore } from '../../stores';
 import Button from '../ui/Button';
@@ -9,88 +9,122 @@ export default function Navbar() {
   const { user, logout } = useAuthStore();
   const { items } = useCartStore();
   const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  
+
   return (
-    <nav className="sticky top-0 z-40 bg-surface-950/80 backdrop-blur-xl border-b border-surface-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-nova-500 to-nova-700 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
-            <span className="font-display font-bold text-xl hidden sm:block">NOVA</span>
+    <>
+      <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#080b14]/82 backdrop-blur-2xl">
+        <div className="mx-auto flex h-[72px] max-w-[1480px] items-center gap-7 px-5 lg:px-10">
+          {/* Logo */}
+          <Link to="/" className="group flex shrink-0 items-center gap-2.5" aria-label="NOVA home">
+            <span className="nova-mark">
+              <span />
+            </span>
+            <span className="text-[13px] font-semibold tracking-[0.23em] text-white">
+              NOVA <b className="font-medium text-white/45">COMMERCE</b>
+            </span>
           </Link>
-          
-          <div className="hidden md:flex flex-1 max-w-xl mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" size={18} />
-              <input
-                type="text"
-                placeholder="Search products, brands, categories..."
-                className="w-full bg-surface-900 border border-surface-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-surface-500 focus:outline-none focus:ring-2 focus:ring-nova-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Link to="/wishlist" className="relative p-2 rounded-lg hover:bg-surface-800 transition-colors">
-              <Heart size={20} />
-              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 rounded-full text-[10px] font-bold flex items-center justify-center">
-                {items.filter(i => i.productVariantId).length}
-              </span>
-            </Link>
-            
-            <Link to="/cart" className="relative p-2 rounded-lg hover:bg-surface-800 transition-colors">
-              <ShoppingCart size={20} />
-              {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 bg-nova-600 rounded-full text-[10px] font-bold flex items-center justify-center">
-                  {totalItems}
-                </span>
-              )}
-            </Link>
-            
+
+          {/* Nav */}
+          <nav className="hidden items-center gap-6 text-[13px] text-[#a5b3c8] lg:flex">
+            <NavLink className="nav-link" to="/shop">New & noteworthy</NavLink>
+            <NavLink className="nav-link" to="/products?category=electronics">Technology</NavLink>
+            <NavLink className="nav-link" to="/products?category=fashion">Fashion</NavLink>
+            <NavLink className="nav-link" to="/products?category=home">Living</NavLink>
+          </nav>
+
+          {/* Search */}
+          <button
+            onClick={() => setSearchOpen(true)}
+            className="search-trigger ml-auto hidden min-w-[220px] max-w-[340px] flex-1 items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.035] px-4 py-2.5 text-left text-sm text-[#718096] md:flex"
+          >
+            <Search size={16} />
+            <span className="flex-1">Search the extraordinary</span>
+            <kbd>⌘ K</kbd>
+          </button>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1">
+            <button className="icon-btn md:hidden" onClick={() => setSearchOpen(true)} aria-label="Search">
+              <Search size={19} />
+            </button>
+            <button className="icon-btn hidden sm:grid" aria-label="Wishlist">
+              <Heart size={19} />
+            </button>
+            <button className="icon-btn hidden sm:grid" aria-label="Notifications">
+              <Bell size={19} />
+              <span className="status-dot" />
+            </button>
             {user ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-surface-300 hidden sm:inline">{user.first_name}</span>
-                <Button variant="ghost" size="sm" onClick={logout}>Logout</Button>
-              </div>
+              <button className="icon-btn hidden sm:grid" aria-label="Account">
+                <User size={19} />
+              </button>
             ) : (
-              <div className="flex items-center gap-2">
-                <Link to="/login"><Button variant="outline" size="sm">Sign In</Button></Link>
-                <Link to="/register"><Button size="sm">Sign Up</Button></Link>
-              </div>
+              <Link to="/login" className="hidden sm:block">
+                <Button variant="ghost" size="sm">Sign In</Button>
+              </Link>
             )}
-            
-            <button className="md:hidden p-2 rounded-lg hover:bg-surface-800" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button className="icon-btn relative" onClick={() => {}} aria-label="Cart">
+              <ShoppingCart size={19} />
+              {totalItems > 0 && (
+                <span className="cart-count">{totalItems}</span>
+              )}
+            </button>
+            <button className="icon-btn lg:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} aria-label="Menu">
               {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
-        
+
+        {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden pb-4 space-y-2 animate-slide-up">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" size={18} />
-              <input
-                type="text"
-                placeholder="Search..."
-                className="w-full bg-surface-900 border border-surface-800 rounded-lg pl-10 pr-4 py-2.5 text-sm text-white placeholder-surface-500 focus:outline-none focus:ring-2 focus:ring-nova-500"
-              />
-            </div>
-            <Link to="/cart" className="block px-4 py-2 rounded-lg hover:bg-surface-800 text-sm">Cart ({totalItems})</Link>
-            <Link to="/wishlist" className="block px-4 py-2 rounded-lg hover:bg-surface-800 text-sm">Wishlist</Link>
-            {!user && (
-              <>
-                <Link to="/login" className="block px-4 py-2 rounded-lg hover:bg-surface-800 text-sm">Sign In</Link>
-                <Link to="/register" className="block px-4 py-2 rounded-lg hover:bg-surface-800 text-sm">Sign Up</Link>
-              </>
-            )}
+          <div className="border-t border-white/[0.06] bg-[#080b14] px-5 py-4 lg:hidden">
+            <nav className="flex flex-col gap-3">
+              <Link to="/shop" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>New & noteworthy</Link>
+              <Link to="/products" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>Technology</Link>
+              <Link to="/products" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>Fashion</Link>
+              <Link to="/products" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>Living</Link>
+              {!user && (
+                <>
+                  <Link to="/login" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>Sign In</Link>
+                  <Link to="/register" className="text-sm text-[#a5b3c8] hover:text-white" onClick={() => setMobileMenuOpen(false)}>Sign Up</Link>
+                </>
+              )}
+            </nav>
           </div>
         )}
-      </div>
-    </nav>
+      </header>
+
+      {/* Search Overlay */}
+      {searchOpen && (
+        <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#080b14]/96 backdrop-blur-2xl">
+          <div className="mx-auto max-w-4xl px-5 py-6 md:py-12">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="group flex shrink-0 items-center gap-2.5" onClick={() => setSearchOpen(false)}>
+                <span className="nova-mark"><span /></span>
+                <span className="text-[13px] font-semibold tracking-[0.23em] text-white">NOVA <b className="font-medium text-white/45">COMMERCE</b></span>
+              </Link>
+              <button className="icon-btn ml-auto" onClick={() => setSearchOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="mt-12 flex items-center gap-4 border-b border-white/15 pb-4">
+              <Search className="text-[#718096]" />
+              <input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-transparent text-2xl font-light outline-none placeholder:text-white/20 md:text-4xl"
+                placeholder="What are you looking for?"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

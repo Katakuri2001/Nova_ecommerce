@@ -9,22 +9,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 export default function Button({ variant = 'primary', size = 'md', loading, children, className = '', disabled, ...props }: ButtonProps) {
-  const base = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-surface-950 disabled:opacity-50 disabled:cursor-not-allowed';
-  
+  const base = 'inline-flex items-center justify-center font-medium rounded-full transition-all duration-300 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
+
   const variants = {
-    primary: 'bg-nova-600 hover:bg-nova-700 text-white shadow-lg shadow-nova-600/25 focus:ring-nova-500',
-    secondary: 'bg-surface-800 hover:bg-surface-700 text-white border border-surface-700 focus:ring-surface-500',
-    outline: 'border border-nova-600/50 text-nova-400 hover:bg-nova-600/10 hover:border-nova-500 focus:ring-nova-500',
-    ghost: 'text-surface-300 hover:text-white hover:bg-surface-800 focus:ring-surface-500',
-    danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/25 focus:ring-red-500',
+    primary: 'bg-[#f5f7ff] hover:bg-[#ccd8ff] text-[#080b14] shadow-lg shadow-[#4d8cff]/10',
+    secondary: 'border border-white/[0.12] bg-white/[0.025] hover:border-white/25 hover:bg-white/[0.06] text-white',
+    outline: 'border border-white/[0.12] bg-transparent hover:border-white/25 hover:bg-white/[0.06] text-white',
+    ghost: 'text-[#a5b3c8] hover:text-white hover:bg-white/[0.06]',
+    danger: 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/25',
   };
-  
+
   const sizes = {
-    sm: 'px-3 py-1.5 text-xs',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
+    sm: 'px-4 py-2 text-xs',
+    md: 'px-5 py-2.5 text-sm',
+    lg: 'px-6 py-3.5 text-sm',
   };
-  
+
   return (
     <button className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} disabled={disabled || loading} {...props}>
       {loading && (
