@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Truck, ShieldCheck, PackageCheck } from 'lucide-react';
 import { useCartStore } from '../stores';
 import Button from '../components/ui/Button';
+import { api } from '../lib/api';
 
 export default function Checkout() {
   const { items } = useCartStore();
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const total = subtotal + 12000;
 
@@ -113,7 +115,30 @@ export default function Checkout() {
                 ))}
               </div>
             )}
-            <Button className="mt-8 w-full sm:w-auto" onClick={() => setStep(step + 1)}>
+            <Button className="mt-8 w-full sm:w-auto" loading={isProcessing} onClick={async () => {
+              if (step === 3) {
+                setIsProcessing(true);
+                try {
+                  const orderData = await api.post<{ orderId: string; orderNumber: string }>('/orders', {
+                    shippingAddressId: '00000000-0000-0000-0000-000000000000',
+                    billingAddressId: '00000000-0000-0000-0000-000000000000',
+                    paymentMethod: 'cod',
+                  });
+                  await api.post('/payments/create', {
+                    orderId: orderData.orderId,
+                    method: 'cod',
+                    amount: total,
+                  });
+                  setStep(4);
+                } catch (err) {
+                  console.error('Order creation failed:', err);
+                } finally {
+                  setIsProcessing(false);
+                }
+              } else {
+                setStep(step + 1);
+              }
+            }}>
               {step === 3 ? 'Place order' : 'Continue'} <ArrowRight size={16} />
             </Button>
           </div>
