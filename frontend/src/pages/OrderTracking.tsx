@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowRight, Package, Truck, Check } from 'lucide-react';
 import Button from '../components/ui/Button';
+import Footer from '../components/layout/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
@@ -139,5 +140,6 @@ export default function OrderTracking() {
         </div>
       </div>
     </div>
+    <Footer />
   );
 }

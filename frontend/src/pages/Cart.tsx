@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../stores';
 import Button from '../components/ui/Button';
+import Footer from '../components/layout/Footer';
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
@@ -115,5 +116,6 @@ export default function Cart() {
         </div>
       </div>
     </div>
+    <Footer />
   );
 }

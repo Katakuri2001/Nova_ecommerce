@@ -5,6 +5,7 @@ import ProductCard, { ProductGrid } from '../components/products/ProductCard';
 import Skeleton from '../components/ui/Skeleton';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
+import Footer from '../components/layout/Footer';
 
 interface Product {
   id: string | number;
@@ -131,5 +132,6 @@ export default function ProductListing({ products = [], loading = false }: Produ
         </button>
       )}
     </div>
+    <Footer />
   );
 }
