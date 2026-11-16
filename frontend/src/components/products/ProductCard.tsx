@@ -45,7 +45,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       className="product-card group"
     >
       <Link to={`/products/${product.slug || product.id}`} className="product-image-wrap">
-        <img src={product.image} alt={product.name} className="product-image" />
+        <img src={product.image} alt={product.name} className="product-image" loading="lazy" />
         <span className="image-scrim" />
         {product.badge && <span className="product-badge">{product.badge}</span>}
       </Link>
