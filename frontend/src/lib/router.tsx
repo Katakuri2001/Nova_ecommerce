@@ -8,6 +8,7 @@ import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
 import OrderTracking from '../pages/OrderTracking';
 import Wishlist from '../pages/Wishlist';
+import Account from '../pages/Account';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import SellerDashboard from '../pages/SellerDashboard';
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: 'products/:id', element: <ProductDetail /> },
       { path: 'cart', element: <Cart /> },
       { path: 'checkout', element: <Checkout /> },
+{ path: 'account', element: <Account /> },
       { path: 'orders/:id', element: <OrderTracking /> },
       { path: 'wishlist', element: <Wishlist /> },
       { path: 'login', element: <Login /> },

@@ -1,110 +1,117 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '../stores';
 import Button from '../components/ui/Button';
-import Card from '../components/ui/Card';
-import { ShoppingCart, ArrowLeft, Trash2, MapPin, Truck, Shield, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
 
 export default function Cart() {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore();
-  
+  const navigate = useNavigate();
+
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-  const discount = subtotal * 0.05;
-  const delivery = subtotal > 100000 ? 0 : 5000;
-  const tax = subtotal * 0.05;
-  const total = subtotal - discount + delivery + tax;
-  const remaining = 100000 - subtotal;
-  
+  const delivery = subtotal > 100000 ? 0 : 12000;
+  const total = subtotal + delivery;
+
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-24 text-center">
-        <ShoppingCart size={64} className="mx-auto text-surface-700 mb-4" />
-        <h2 className="font-display text-2xl font-bold mb-2">Your cart is empty</h2>
-        <p className="text-surface-400 mb-8">Browse our products and add something special.</p>
-        <Link to="/products"><Button>Start Shopping</Button></Link>
+      <div className="section-shell grid min-h-[70vh] place-content-center py-20 text-center">
+        <ShoppingBag className="mx-auto mb-4 text-[#718096]" size={40} />
+        <h2 className="text-3xl font-light mb-2">Your bag is beautifully empty.</h2>
+        <p className="text-sm text-[#718096] mb-8">Discover something exceptional.</p>
+        <Link to="/products">
+          <Button>Start shopping</Button>
+        </Link>
       </div>
     );
   }
-  
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="font-display text-3xl font-bold mb-8">Shopping Cart</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-4">
-          {items.map((item) => (
-            <motion.div key={item.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <Card className="flex gap-4">
-                <img src={item.imageUrl} alt={item.productName} className="w-24 h-24 rounded-lg object-cover" />
-                <div className="flex-1">
-                  <h3 className="font-medium">{item.productName}</h3>
-                  <p className="text-sm text-surface-500">{item.variantName}</p>
-                  <p className="text-sm text-nova-400 mt-1">{item.unitPrice.toLocaleString()} MMK</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center border border-surface-700 rounded-lg">
-                    <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 py-1 hover:bg-surface-800 rounded-l-lg">−</button>
-                    <span className="px-4 py-1 text-sm">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-3 py-1 hover:bg-surface-800 rounded-r-lg">+</button>
+    <div className="section-shell py-10 md:py-16">
+      <div className="mx-auto max-w-5xl">
+        <p className="eyebrow">Your selection</p>
+        <h1 className="mt-3 text-4xl font-light md:text-6xl">Shopping bag.</h1>
+        <p className="mt-4 text-sm text-[#718096]">{items.length} curated items</p>
+
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_360px]">
+          {/* Cart Items */}
+          <div className="space-y-5">
+            {items.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-4"
+                style={{ boxShadow: 'inset 0 1px #ffffff08' }}
+              >
+                <img
+                  className="h-28 w-24 rounded-xl object-cover"
+                  src={item.imageUrl}
+                  alt={item.productName}
+                />
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <p className="text-[11px] uppercase tracking-wider text-[#718096]">{item.sku || 'NOVA'}</p>
+                  <p className="mt-1 text-sm font-medium">{item.productName}</p>
+                  <p className="mt-1 text-xs text-[#718096]">{item.variantName || 'Standard'}</p>
+                  <div className="mt-auto flex items-center justify-between">
+                    <div className="quantity-control">
+                      <button onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))} aria-label="Decrease">
+                        <Minus size={13} />
+                      </button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, item.quantity + 1)} aria-label="Increase">
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                    <span className="text-sm font-medium">
+                      {(item.unitPrice * item.quantity).toLocaleString()} MMK
+                    </span>
                   </div>
-                  <button onClick={() => removeItem(item.id)} className="text-red-400 hover:text-red-300 p-1">
-                    <Trash2 size={16} />
+                  <button
+                    onClick={() => removeItem(item.id)}
+                    className="mt-2 self-start text-[11px] text-[#718096] underline-offset-4 hover:text-white hover:underline"
+                  >
+                    Remove
                   </button>
                 </div>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-        
-        <div>
-          <Card className="sticky top-20">
-            <h3 className="font-semibold text-lg mb-4">Order Summary</h3>
-            
-            <div className="space-y-3 mb-4">
-              <div className="flex justify-between text-sm">
-                <span className="text-surface-400">Subtotal</span>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Summary */}
+          <aside className="panel h-fit p-6 lg:sticky lg:top-28">
+            <h2 className="font-medium">Order summary</h2>
+            <div className="mt-5 space-y-4">
+              {items.map((item) => (
+                <div key={item.id} className="flex gap-3">
+                  <img src={item.imageUrl} alt="" className="h-16 w-14 rounded-lg object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{item.productName}</p>
+                    <p className="mt-1 text-xs text-[#718096]">Qty {item.quantity}</p>
+                  </div>
+                  <p className="text-xs">{(item.unitPrice * item.quantity).toLocaleString()} MMK</p>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 space-y-3 border-t border-white/[0.08] pt-5 text-sm">
+              <div className="flex justify-between text-[#a5b3c8]">
+                <span>Subtotal</span>
                 <span>{subtotal.toLocaleString()} MMK</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-surface-400">Discount</span>
-                <span className="text-green-400">-{discount.toLocaleString()} MMK</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-surface-400">Delivery</span>
+              <div className="flex justify-between text-[#a5b3c8]">
+                <span>Delivery</span>
                 <span>{delivery === 0 ? 'Free' : `${delivery.toLocaleString()} MMK`}</span>
               </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-surface-400">Tax</span>
-                <span>{tax.toLocaleString()} MMK</span>
-              </div>
-              <div className="border-t border-surface-800 pt-3 flex justify-between font-bold">
+              <div className="flex justify-between border-t border-white/[0.08] pt-4 text-base font-medium">
                 <span>Total</span>
                 <span>{total.toLocaleString()} MMK</span>
               </div>
             </div>
-            
-            {remaining > 0 && (
-              <motion.div className="mb-4 bg-nova-600/10 border border-nova-600/20 rounded-lg p-3 text-sm text-nova-400">
-                <p>You're {remaining.toLocaleString()} MMK away from free delivery!</p>
-              </motion.div>
-            )}
-            
-            <Link to="/checkout">
-              <Button className="w-full" size="lg">
-                <ShoppingCart size={18} />
-                Proceed to Checkout
-              </Button>
-            </Link>
-            
-            <div className="flex items-center gap-2 mt-4 text-xs text-surface-500 justify-center">
-              <Shield size={14} />
-              <span>Secure checkout</span>
-              <span>•</span>
-              <Truck size={14} />
-              <span>Free shipping over 100K</span>
-            </div>
-          </Card>
+            <p className="mb-5 mt-2 text-xs text-[#718096]">Shipping calculated at checkout</p>
+            <Button className="w-full" onClick={() => navigate('/checkout')}>
+              Secure checkout <ArrowRight size={16} />
+            </Button>
+          </aside>
         </div>
       </div>
     </div>
