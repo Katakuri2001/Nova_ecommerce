@@ -422,7 +422,7 @@ async function handleListProducts(request: Request, env: Env) {
   const countResult = await db.prepare(countQuery).bind(...params).first();
   const total = Number(countResult?.['count'] || 0);
   
-  const dataQuery = `SELECT p.*, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id ${where} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
+  const dataQuery = `SELECT p.*, p.base_price as price, c.name as category_name, b.name as brand_name, (SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY sort_order LIMIT 1) as image_url FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id ${where} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`;
   const dataParams = [...params, limit, (page - 1) * limit];
   const products = await db.prepare(dataQuery).bind(...dataParams).all();
   
@@ -432,7 +432,7 @@ async function handleListProducts(request: Request, env: Env) {
 async function handleGetProduct(_request: Request, env: Env, path: string) {
   const id = path.split('/products/')[1];
   const db = await getDB(env);
-  const product = await db.prepare('SELECT * FROM products WHERE id = ? AND status = ?').bind(id, 'active').first();
+  const product = await db.prepare('SELECT p.*, p.base_price as price, c.name as category_name, b.name as brand_name FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN brands b ON p.brand_id = b.id WHERE p.id = ? AND p.status = ?').bind(id, 'active').first();
   if (!product) return jsonResponse({ error: 'Product not found' }, 404);
   
   const variants = await db.prepare('SELECT * FROM product_variants WHERE product_id = ?').bind(id).all();

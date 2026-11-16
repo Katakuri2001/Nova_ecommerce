@@ -94,7 +94,7 @@ export default function ProductDetail() {
     );
   }
 
-  const images = product.images?.map((img) => img.image_url) || [product.image];
+  const images = (product.images as any[])?.map((img: any) => img.image_url) || [product.image || (product as any).image_url || 'https://picsum.photos/800/800'];
   const reviewCount = product.reviews || product.review_count || 0;
 
   return (

@@ -15,7 +15,8 @@ interface Product {
   rating: number;
   reviews?: number;
   review_count?: number;
-  image: string;
+  image?: string;
+  image_url?: string;
   brand?: string;
   seller_name?: string;
   in_stock?: boolean;
@@ -45,7 +46,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
       className="product-card group"
     >
       <Link to={`/products/${product.slug || product.id}`} className="product-image-wrap">
-        <img src={product.image} alt={product.name} className="product-image" loading="lazy" />
+        <img src={product.image || product.image_url || 'https://picsum.photos/400/500'} alt={product.name} className="product-image" loading="lazy" />
         <span className="image-scrim" />
         {product.badge && <span className="product-badge">{product.badge}</span>}
       </Link>
@@ -86,7 +87,7 @@ export default function ProductCard({ product, index = 0 }: ProductCardProps) {
             productVariantId: String(product.id),
             productName: product.name,
             variantName: '',
-            imageUrl: product.image,
+            imageUrl: product.image || product.image_url || '',
             quantity: 1,
             unitPrice: product.price,
             sku: '',

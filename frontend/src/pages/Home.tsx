@@ -12,14 +12,18 @@ interface Product {
   name: string;
   slug?: string;
   price: number;
+  base_price?: number;
   compare_at_price?: number;
   oldPrice?: number;
   rating: number;
   review_count?: number;
   reviews?: number;
-  image: string;
+  image?: string;
+  image_url?: string;
   seller_name?: string;
   brand?: string;
+  brand_name?: string;
+  category_name?: string;
   in_stock?: boolean;
   badge?: string;
 }
@@ -33,9 +37,9 @@ export default function Home() {
   const products: Product[] = data?.products || [];
 
   const categories = [
-    { name: 'Technology', image: products[0]?.image || '', count: '126 pieces' },
-    { name: 'Modern carry', image: products[1]?.image || '', count: '84 pieces' },
-    { name: 'Future form', image: products[2]?.image || '', count: '72 pieces' },
+    { name: 'Technology', image: products[0]?.image || products[0]?.image_url || '', count: '126 pieces' },
+    { name: 'Modern carry', image: products[1]?.image || products[1]?.image_url || '', count: '84 pieces' },
+    { name: 'Future form', image: products[2]?.image || products[2]?.image_url || '', count: '72 pieces' },
   ];
 
   return (
@@ -90,7 +94,7 @@ export default function Home() {
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
             className="hero-visual"
           >
-            <img src={products[0]?.image || 'https://picsum.photos/800/800'} alt="Featured product" />
+            <img src={products[0]?.image || products[0]?.image_url || 'https://picsum.photos/800/800'} alt="Featured product" />
             <div className="hero-card">
               <span className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
                 <Sparkles size={14} />
@@ -164,7 +168,7 @@ export default function Home() {
       {/* Editorial Banner */}
       <section className="section-shell pb-24">
         <div className="editorial-banner">
-          <img src={products[3]?.image || 'https://picsum.photos/800/600'} alt="NOVA fashion edit" />
+          <img src={products[3]?.image || products[3]?.image_url || 'https://picsum.photos/800/600'} alt="NOVA fashion edit" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#080b14] via-[#080b14]/70 to-transparent" />
           <div className="relative z-10 max-w-lg">
             <p className="eyebrow text-[#b8c7ff]">The after-dark edit</p>

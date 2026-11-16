@@ -31,7 +31,8 @@ export default function Wishlist() {
   const products = data?.products || [];
 
   return (
-    <div className="section-shell py-10 md:py-16">
+    <>
+      <div className="section-shell py-10 md:py-16">
       <div className="mb-7 text-xs text-[#718096]">
         <Link to="/account" className="hover:text-white">Account</Link> / <span className="text-[#a5b3c8]">Wishlist</span>
       </div>
@@ -74,5 +75,6 @@ export default function Wishlist() {
       )}
     </div>
     <Footer />
+    </>
   );
 }

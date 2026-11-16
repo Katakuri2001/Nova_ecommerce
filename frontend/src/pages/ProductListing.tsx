@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, Plus, X } from 'lucide-react';
 import ProductCard, { ProductGrid } from '../components/products/ProductCard';
 import Skeleton from '../components/ui/Skeleton';
@@ -20,6 +21,8 @@ interface Product {
   image: string;
   seller_name?: string;
   brand?: string;
+  category?: string;
+  category_name?: string;
   in_stock?: boolean;
   badge?: string;
 }
@@ -30,25 +33,41 @@ interface ProductListingProps {
 }
 
 export default function ProductListing({ products = [], loading = false }: ProductListingProps) {
-  const [activeCategory, setActiveCategory] = React.useState('All');
+  const [searchParams] = useSearchParams();
+  const urlCategory = searchParams.get('category') || 'All';
+  // Normalize URL category to match filter labels
+  const categoryMap: Record<string, string> = {
+    electronics: 'Electronics',
+    fashion: 'Fashion',
+    home: 'Home & Living',
+    accessories: 'Accessories',
+    all: 'All',
+  };
+  const normalizedCategory = categoryMap[urlCategory.toLowerCase()] || urlCategory;
+  const [activeCategory, setActiveCategory] = React.useState(normalizedCategory);
   const [sort, setSort] = React.useState('Featured');
   const [filterOpen, setFilterOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setActiveCategory(normalizedCategory);
+  }, [normalizedCategory]);
 
   const visible = React.useMemo(() => {
     const filtered =
       activeCategory === 'All'
         ? products
-        : products.filter((p) =>
-            (p.brand || p.seller_name || '').toLowerCase().includes(activeCategory.toLowerCase()) ||
-            (typeof p.id === 'string' ? '' : '').includes('')
-          );
+        : products.filter((p) => {
+            const cat = (p.category || p.category_name || '').toLowerCase();
+            return cat.includes(activeCategory.toLowerCase());
+          });
     return [...filtered].sort((a, b) =>
       sort === 'Price low' ? a.price - b.price : sort === 'Rating' ? b.rating - a.rating : 0
     );
   }, [activeCategory, sort, products]);
 
   return (
-    <div className="section-shell py-10 md:py-16">
+    <>
+      <div className="section-shell py-10 md:py-16">
       <div className="text-xs text-[#718096]">
         Home / Collections / <span className="text-[#a5b3c8]">All objects</span>
       </div>
@@ -133,5 +152,6 @@ export default function ProductListing({ products = [], loading = false }: Produ
       )}
     </div>
     <Footer />
+    </>
   );
 }
