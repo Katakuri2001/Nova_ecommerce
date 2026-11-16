@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import type { Env, Database } from './env';
 
+const rateLimitStore: Record<string, { count: number; resetAt: number }> = {};
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -11,7 +13,7 @@ export default {
     
     return new Response(JSON.stringify({ error: 'Not Found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   },
 };
@@ -20,6 +22,43 @@ async function handleRequest(request: Request, env: Env, _ctx: ExecutionContext)
   const url = new URL(request.url);
   const path = url.pathname.replace('/api', '');
   const method = request.method;
+
+  // Rate limiting (simple in-memory, per worker instance)
+  const clientIp = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+  const rateLimitKey = `${clientIp}:${path}`;
+  const now = Date.now();
+  const windowMs = 60000; // 1 minute
+  const maxRequests = 100; // per minute per IP
+  if (!rateLimitStore[rateLimitKey]) {
+    rateLimitStore[rateLimitKey] = { count: 0, resetAt: now + windowMs };
+  }
+  if (now > rateLimitStore[rateLimitKey].resetAt) {
+    rateLimitStore[rateLimitKey] = { count: 0, resetAt: now + windowMs };
+  }
+  rateLimitStore[rateLimitKey].count++;
+  if (rateLimitStore[rateLimitKey].count > maxRequests) {
+    return new Response(JSON.stringify({ error: 'Too many requests' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': String(Math.ceil((rateLimitStore[rateLimitKey].resetAt - now) / 1000)),
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  }
+
+  // CORS preflight
+  if (method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token',
+        'Access-Control-Max-Age': '86400',
+      },
+    });
+  }
 
   try {
     // Auth routes
@@ -49,6 +88,12 @@ async function handleRequest(request: Request, env: Env, _ctx: ExecutionContext)
     if (path === '/products' && method === 'POST') {
       return handleCreateProduct(request, env);
     }
+    if (path.startsWith('/products/') && method === 'PATCH') {
+      return handleUpdateProduct(request, env, path);
+    }
+    if (path.startsWith('/products/') && method === 'DELETE') {
+      return handleDeleteProduct(request, env, path);
+    }
 
     // Search
     if (path === '/search' && method === 'GET') {
@@ -67,6 +112,31 @@ async function handleRequest(request: Request, env: Env, _ctx: ExecutionContext)
     }
     if (path.startsWith('/cart/items/') && method === 'DELETE') {
       return handleRemoveCartItem(request, env, path);
+    }
+
+    // Wishlist routes
+    if (path === '/wishlist' && method === 'GET') {
+      return handleGetWishlist(request, env);
+    }
+    if (path === '/wishlist/items' && method === 'POST') {
+      return handleAddToWishlist(request, env);
+    }
+    if (path.startsWith('/wishlist/items/') && method === 'DELETE') {
+      return handleRemoveFromWishlist(request, env, path);
+    }
+
+    // Address routes
+    if (path === '/addresses' && method === 'GET') {
+      return handleListAddresses(request, env);
+    }
+    if (path === '/addresses' && method === 'POST') {
+      return handleCreateAddress(request, env);
+    }
+    if (path.startsWith('/addresses/') && method === 'PATCH') {
+      return handleUpdateAddress(request, env, path);
+    }
+    if (path.startsWith('/addresses/') && method === 'DELETE') {
+      return handleDeleteAddress(request, env, path);
     }
 
     // Order routes
@@ -116,19 +186,19 @@ async function handleRequest(request: Request, env: Env, _ctx: ExecutionContext)
 
     return new Response(JSON.stringify({ error: 'Route not found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   } catch (error) {
     console.error('API Error:', error);
     if (error instanceof ValidationError) {
       return new Response(JSON.stringify({ error: 'Validation failed', details: error.details }), {
         status: 400,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
       });
     }
     return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
     });
   }
 }
@@ -179,7 +249,12 @@ async function getDB(env: Env): Promise<Database> {
 async function jsonResponse(data: unknown, status: number = 200): Promise<Response> {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Auth-Token',
+    },
   });
 }
 
@@ -518,6 +593,117 @@ async function handleVerifyPayment(request: Request, env: Env) {
   const payment = await db.prepare('SELECT * FROM payments WHERE transaction_id = ?').bind(body.transactionId).first();
   if (!payment) throw new Error('Payment not found');
   return jsonResponse({ payment });
+}
+
+async function handleUpdateProduct(request: Request, env: Env, path: string) {
+  const { role } = await requireAuth(request, env);
+  if (role !== 'seller' && role !== 'admin') throw new Error('Forbidden');
+  const id = path.split('/products/')[1];
+  const body = await request.json() as Record<string, any>;
+  const db = await getDB(env);
+  const updates: string[] = [];
+  const params: (string | number)[] = [];
+  if (body.name) { updates.push('name = ?'); params.push(body.name); }
+  if (body.description) { updates.push('description = ?'); params.push(body.description); }
+  if (body.basePrice) { updates.push('base_price = ?'); params.push(body.basePrice); }
+  if (body.status) { updates.push('status = ?'); params.push(body.status); }
+  if (updates.length === 0) return jsonResponse({ error: 'No updates provided' }, 400);
+  params.push(id);
+  await db.prepare(`UPDATE products SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).bind(...params).first();
+  return jsonResponse({ success: true });
+}
+
+async function handleDeleteProduct(request: Request, env: Env, path: string) {
+  const { role } = await requireAuth(request, env);
+  if (role !== 'seller' && role !== 'admin') throw new Error('Forbidden');
+  const id = path.split('/products/')[1];
+  const db = await getDB(env);
+  await db.prepare('UPDATE products SET status = ? WHERE id = ?').bind('archived', id).first();
+  return jsonResponse({ success: true });
+}
+
+async function handleGetWishlist(request: Request, env: Env) {
+  const { userId } = await requireAuth(request, env);
+  const db = await getDB(env);
+  const wishlist = await db.prepare('SELECT * FROM wishlists WHERE user_id = ?').bind(userId).first();
+  if (!wishlist) {
+    const result = await db.prepare('INSERT INTO wishlists (user_id) VALUES (?)').bind(userId).first();
+    return jsonResponse({ wishlist: { id: result?.id, user_id: userId, items: [] } });
+  }
+  const items = await db.prepare('SELECT wi.*, pv.*, p.name as product_name, p.base_price, p.image_url FROM wishlist_items wi LEFT JOIN product_variants pv ON wi.product_variant_id = pv.id LEFT JOIN products p ON pv.product_id = p.id WHERE wi.wishlist_id = ?').bind(wishlist.id).all();
+  return jsonResponse({ wishlist: { ...wishlist, items: items.results } });
+}
+
+async function handleAddToWishlist(request: Request, env: Env) {
+  const { userId } = await requireAuth(request, env);
+  const body = await request.json() as Record<string, any>;
+  const db = await getDB(env);
+  let wishlist = await db.prepare('SELECT * FROM wishlists WHERE user_id = ?').bind(userId).first();
+  if (!wishlist) {
+    const result = await db.prepare('INSERT INTO wishlists (user_id) VALUES (?)').bind(userId).first();
+    wishlist = { id: result?.id };
+  }
+  await db.prepare('INSERT OR IGNORE INTO wishlist_items (wishlist_id, product_variant_id) VALUES (?, ?)').bind(wishlist.id, body.productVariantId).first();
+  return jsonResponse({ success: true });
+}
+
+async function handleRemoveFromWishlist(request: Request, env: Env, path: string) {
+  const { userId } = await requireAuth(request, env);
+  const variantId = path.split('/wishlist/items/')[1];
+  const db = await getDB(env);
+  const wishlist = await db.prepare('SELECT * FROM wishlists WHERE user_id = ?').bind(userId).first();
+  if (wishlist) {
+    await db.prepare('DELETE FROM wishlist_items WHERE wishlist_id = ? AND product_variant_id = ?').bind(wishlist.id, variantId).first();
+  }
+  return jsonResponse({ success: true });
+}
+
+async function handleListAddresses(request: Request, env: Env) {
+  const { userId } = await requireAuth(request, env);
+  const db = await getDB(env);
+  const addresses = await db.prepare('SELECT * FROM addresses WHERE user_id = ?').bind(userId).all();
+  return jsonResponse({ addresses: addresses.results });
+}
+
+async function handleCreateAddress(request: Request, env: Env) {
+  const { userId } = await requireAuth(request, env);
+  const body = await request.json() as Record<string, any>;
+  const db = await getDB(env);
+  const id = 'addr_' + Math.random().toString(36).substr(2, 12);
+  await db.prepare('INSERT INTO addresses (id, user_id, label, full_name, address_line_1, address_line_2, city, state, zip_code, country, phone, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, userId, body.label || 'Home', body.fullName, body.addressLine1, body.addressLine2 || null, body.city, body.state, body.zipCode, body.country, body.phone, body.isDefault || false).first();
+  return jsonResponse({ id }, 201);
+}
+
+async function handleUpdateAddress(request: Request, env: Env, path: string) {
+  const { userId } = await requireAuth(request, env);
+  const id = path.split('/addresses/')[1];
+  const body = await request.json() as Record<string, any>;
+  const db = await getDB(env);
+  const addr = await db.prepare('SELECT * FROM addresses WHERE id = ? AND user_id = ?').bind(id, userId).first();
+  if (!addr) throw new Error('Address not found');
+  const updates: string[] = [];
+  const params: (string | number | boolean)[] = [];
+  if (body.label) { updates.push('label = ?'); params.push(body.label); }
+  if (body.fullName) { updates.push('full_name = ?'); params.push(body.fullName); }
+  if (body.addressLine1) { updates.push('address_line_1 = ?'); params.push(body.addressLine1); }
+  if (body.city) { updates.push('city = ?'); params.push(body.city); }
+  if (body.state) { updates.push('state = ?'); params.push(body.state); }
+  if (body.zipCode) { updates.push('zip_code = ?'); params.push(body.zipCode); }
+  if (body.country) { updates.push('country = ?'); params.push(body.country); }
+  if (body.phone) { updates.push('phone = ?'); params.push(body.phone); }
+  if (updates.length === 0) return jsonResponse({ error: 'No updates provided' }, 400);
+  params.push(id);
+  await db.prepare(`UPDATE addresses SET ${updates.join(', ')} WHERE id = ?`).bind(...params).first();
+  return jsonResponse({ success: true });
+}
+
+async function handleDeleteAddress(request: Request, env: Env, path: string) {
+  const { userId } = await requireAuth(request, env);
+  const id = path.split('/addresses/')[1];
+  const db = await getDB(env);
+  await db.prepare('DELETE FROM addresses WHERE id = ? AND user_id = ?').bind(id, userId).first();
+  return jsonResponse({ success: true });
 }
 
 async function handleSellerDashboard(request: Request, env: Env, path: string) {

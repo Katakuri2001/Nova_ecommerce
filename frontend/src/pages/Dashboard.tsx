@@ -5,8 +5,7 @@ import {
   CircleDollarSign, FileClock, LayoutDashboard, Menu, MoreHorizontal, Package,
   Search, Settings, ShoppingCart, Star, Store, Tag, TrendingUp, Users,
 } from 'lucide-react';
-import { Logo } from '../components/layout/Navbar';
-import { money } from '../lib/api';
+const money = (value: number) => `${new Intl.NumberFormat('en-US').format(value)} MMK`;
 
 const sellerNav = [
   ['Overview', LayoutDashboard],
@@ -42,7 +41,7 @@ export default function Dashboard({ role }: DashboardProps) {
   const nav = role === 'seller' ? sellerNav : adminNav;
   const title = role === 'seller' ? 'Seller Studio' : 'Admin Console';
 
-  const stats =
+  const stats: [string, string, string, boolean][] =
     role === 'seller'
       ? [
           ['Revenue', '48.6M MMK', '+18.4%', true],
@@ -150,7 +149,7 @@ export default function Dashboard({ role }: DashboardProps) {
   );
 }
 
-function Overview({ role, stats }: { role: 'seller' | 'admin'; stats: string[][] }) {
+function Overview({ role, stats }: { role: 'seller' | 'admin'; stats: [string, string, string, boolean][] }) {
   return (
     <>
       <div className="flex flex-wrap items-end justify-between gap-4">

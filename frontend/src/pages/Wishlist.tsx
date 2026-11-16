@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Heart, ArrowRight } from 'lucide-react';
 import ProductCard from '../components/products/ProductCard';
+import Button from '../components/ui/Button';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 

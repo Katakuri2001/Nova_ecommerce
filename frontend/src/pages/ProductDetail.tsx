@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 import Button from '../components/ui/Button';
 import ProductCard from '../components/products/ProductCard';
+import Footer from '../components/layout/Footer';
 import { useCartStore } from '../stores';
 import { useWishlistStore } from '../stores';
 

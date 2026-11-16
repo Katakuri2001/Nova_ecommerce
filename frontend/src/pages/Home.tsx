@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import ProductCard, { ProductGrid } from '../components/products/ProductCard';
+import Footer from '../components/layout/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../lib/api';
 
